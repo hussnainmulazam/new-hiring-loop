@@ -29,6 +29,9 @@ def save_candidate_cv_file(
     Returns: file URL or relative web-accessible path.
     """
     supabase_url = (settings.SUPABASE_URL or "").strip()
+    # Normalize base URL by stripping trailing /rest/v1 or slashes
+    import re
+    base_supabase_url = re.sub(r"/rest/v1/?$", "", supabase_url).rstrip("/")
     service_key = (settings.SUPABASE_SERVICE_ROLE_KEY or "").strip()
     bucket = (settings.SUPABASE_STORAGE_BUCKET or "resumes").strip()
 
@@ -41,8 +44,8 @@ def save_candidate_cv_file(
     unique_key = f"{uuid.uuid4().hex[:12]}_{sanitized_name}"
 
     # 1. Try Supabase Storage if service role key is configured
-    if supabase_url and service_key:
-        upload_endpoint = f"{supabase_url.rstrip('/')}/storage/v1/object/{bucket}/{unique_key}"
+    if base_supabase_url and service_key:
+        upload_endpoint = f"{base_supabase_url}/storage/v1/object/{bucket}/{unique_key}"
         headers = {
             "Authorization": f"Bearer {service_key}",
             "Content-Type": mime_type,
@@ -52,7 +55,7 @@ def save_candidate_cv_file(
             with httpx.Client(timeout=15.0) as client:
                 resp = client.post(upload_endpoint, headers=headers, content=file_bytes)
                 if resp.is_success:
-                    public_url = f"{supabase_url.rstrip('/')}/storage/v1/object/public/{bucket}/{unique_key}"
+                    public_url = f"{base_supabase_url}/storage/v1/object/public/{bucket}/{unique_key}"
                     logger.info("Successfully uploaded %s to Supabase Storage: %s", sanitized_name, public_url)
                     return public_url
                 else:
