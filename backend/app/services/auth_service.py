@@ -95,10 +95,10 @@ class AuthService:
 
         target_redirect_uri = (
             redirect_uri
+            or os.getenv("GOOGLE_REDIRECT_URI")
+            or settings.google_redirect_uri
             or os.getenv("GOOGLE_LOGIN_REDIRECT_URI")
             or settings.GOOGLE_LOGIN_REDIRECT_URI
-            or os.getenv("GOOGLE_REDIRECT_URI")
-            or settings.GOOGLE_REDIRECT_URI
             or "http://localhost:8000/auth/google/callback"
         ).rstrip("/")
 
@@ -157,10 +157,10 @@ class AuthService:
         target_redirect_uri = (
             redirect_uri
             or (state_data.get("redirect_uri") if state_data else None)
+            or os.getenv("GOOGLE_REDIRECT_URI")
+            or settings.google_redirect_uri
             or os.getenv("GOOGLE_LOGIN_REDIRECT_URI")
             or settings.GOOGLE_LOGIN_REDIRECT_URI
-            or os.getenv("GOOGLE_REDIRECT_URI")
-            or settings.GOOGLE_REDIRECT_URI
             or "http://localhost:8000/auth/google/callback"
         ).rstrip("/")
 

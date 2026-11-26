@@ -260,15 +260,15 @@ def google_callback(
     redirect_url = f"{frontend_url}/auth/callback?token={urllib.parse.quote(token)}&setup_completed={setup_str}"
     response = RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
 
-    # Also set HTTP-only cookie on response for localhost
+    is_https = frontend_url.startswith("https")
     response.set_cookie(
         key="auth_token",
         value=token,
         max_age=60 * 60 * 24 * 7,  # 7 days
         path="/",
         httponly=True,
-        samesite="lax",
-        secure=False,
+        samesite="none" if is_https else "lax",
+        secure=is_https,
     )
     return response
 

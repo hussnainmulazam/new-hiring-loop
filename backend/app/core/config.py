@@ -19,13 +19,25 @@ class Settings(BaseSettings):
     DATABASE_URL: str = ""
 
     # CORS origins: supports comma-separated string, JSON array, or Python list
-    CORS_ORIGINS: Union[list[str], str] = ["http://localhost:3000", "https://hrhiringloop.vercel.app"]
+    CORS_ORIGINS: Union[list[str], str] = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "https://hrhiringloop.vercel.app",
+    ]
 
-    # ── JWT ──────────────────────────────────────────────────────────────────
-    # Overridden strictly by .env in production
+    # ── JWT / Secret Key ─────────────────────────────────────────────────────
+    # Overridden strictly by .env in production (SECRET_KEY or JWT_SECRET_KEY)
+    SECRET_KEY: Optional[str] = None
     JWT_SECRET_KEY: str = ""
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
+
+    @property
+    def effective_jwt_secret(self) -> str:
+        """Returns the active JWT signing key, resolving SECRET_KEY or JWT_SECRET_KEY."""
+        import os
+        key = self.JWT_SECRET_KEY or self.SECRET_KEY or os.getenv("SECRET_KEY") or os.getenv("JWT_SECRET_KEY") or ""
+        return key.strip() or "insecure_dev_fallback_secret_key_change_in_production"
 
     # ── AI Services (OpenRouter via OpenAI SDK) ──────────────────────────────
     OPENROUTER_API_KEY: Optional[str] = None
@@ -141,6 +153,19 @@ class Settings(BaseSettings):
         url = self.FRONTEND_BASE_URL or self.FRONTEND_URL or "http://localhost:3000"
         return url.rstrip("/")
 
+    @property
+    def google_redirect_uri(self) -> str:
+        """Returns the canonical redirect URI sent to Google, stripped of any trailing slash."""
+        import os
+        uri = (
+            self.GOOGLE_REDIRECT_URI
+            or self.GOOGLE_LOGIN_REDIRECT_URI
+            or os.getenv("GOOGLE_REDIRECT_URI")
+            or os.getenv("GOOGLE_LOGIN_REDIRECT_URI")
+            or "http://localhost:8000/auth/google/callback"
+        )
+        return uri.rstrip("/")
+
     # Supabase Storage Integration
     STORAGE_BACKEND: Optional[str] = None
     SUPABASE_URL: Optional[str] = None
@@ -164,19 +189,24 @@ class Settings(BaseSettings):
     @field_validator("CORS_ORIGINS", mode="after")
     @classmethod
     def assemble_cors_origins(cls, v: Union[str, list[str]]) -> list[str]:
+        origins: list[str] = []
         if isinstance(v, str):
-            # Check if it's formatted as a JSON array e.g. ["http://localhost:3000"]
             stripped = v.strip()
             if stripped.startswith("[") and stripped.endswith("]"):
                 try:
                     parsed = json.loads(stripped)
                     if isinstance(parsed, list):
-                        return [str(item).strip() for item in parsed]
+                        origins = [str(item).strip() for item in parsed]
                 except json.JSONDecodeError:
                     pass
-            # Comma-separated values e.g. "http://localhost:3000,http://127.0.0.1:3000"
-            return [origin.strip() for origin in v.split(",") if origin.strip()]
-        return [str(item).strip() for item in v]
+            if not origins:
+                origins = [origin.strip() for origin in v.split(",") if origin.strip()]
+        elif isinstance(v, list):
+            origins = [str(item).strip() for item in v if item]
+
+        # Never permit wildcard '*' when allow_credentials=True
+        cleaned = [o.rstrip("/") for o in origins if o and o != "*"]
+        return cleaned or ["http://localhost:3000", "http://localhost:3001", "https://hrhiringloop.vercel.app"]
 
     @property
     def sync_database_url(self) -> str:

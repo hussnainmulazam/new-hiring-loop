@@ -53,7 +53,7 @@ def create_access_token(
         or timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     payload = {"sub": str(subject), "exp": expire}
-    return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    return jwt.encode(payload, settings.effective_jwt_secret, algorithm=settings.JWT_ALGORITHM)
 
 
 def decode_access_token(token: str) -> dict:
@@ -67,7 +67,7 @@ def decode_access_token(token: str) -> dict:
     """
     return jwt.decode(
         token,
-        settings.JWT_SECRET_KEY,
+        settings.effective_jwt_secret,
         algorithms=[settings.JWT_ALGORITHM],
     )
 
@@ -81,7 +81,7 @@ def create_oauth_state(flow: str, extra: dict | None = None, expires_delta: time
     payload = {"flow": flow, "exp": expire}
     if extra:
         payload.update(extra)
-    return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    return jwt.encode(payload, settings.effective_jwt_secret, algorithm=settings.JWT_ALGORITHM)
 
 
 def decode_oauth_state(state: str) -> dict:
@@ -91,7 +91,7 @@ def decode_oauth_state(state: str) -> dict:
     """
     return jwt.decode(
         state,
-        settings.JWT_SECRET_KEY,
+        settings.effective_jwt_secret,
         algorithms=[settings.JWT_ALGORITHM],
     )
 

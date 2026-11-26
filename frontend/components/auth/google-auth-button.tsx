@@ -17,18 +17,9 @@ export function GoogleAuthButton({ onError, disabled = false }: GoogleAuthButton
     onError("");
 
     try {
-      // 1. Fetch authorized Google consent URL from backend
-      const res = await fetch("/api/auth/google/url");
-      const data = await res.json();
-
-      if (!res.ok || !data.url) {
-        setIsLoading(false);
-        onError(data.detail || "Unable to initialize Google Sign-in. Please try again.");
-        return;
-      }
-
-      // 2. Perform full-page browser redirect directly to Google consent
-      window.location.href = data.url;
+      // Direct navigation to backend /auth/google which handles CSRF state and redirects to Google
+      const apiUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/+$/, "");
+      window.location.href = `${apiUrl}/auth/google`;
     } catch (err: any) {
       setIsLoading(false);
       onError("Network error connecting to Google. Please check your connection.");

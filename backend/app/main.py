@@ -148,17 +148,19 @@ app = FastAPI(
 )
 
 # ── CORS Middleware Configuration ─────────────────────────────────────────────
-# Read allowed origins from env var CORS_ORIGINS (comma-separated), default: "http://localhost:3000"
+# Read allowed origins from env var CORS_ORIGINS (comma-separated), default: localhost & prod vercel
 raw_cors_origins = os.getenv("CORS_ORIGINS")
 if raw_cors_origins:
-    cors_origins = [origin.strip() for origin in raw_cors_origins.split(",") if origin.strip()]
+    parsed_origins = [origin.strip().rstrip("/") for origin in raw_cors_origins.split(",") if origin.strip()]
 elif isinstance(settings.CORS_ORIGINS, list):
-    cors_origins = settings.CORS_ORIGINS
+    parsed_origins = [origin.strip().rstrip("/") for origin in settings.CORS_ORIGINS if origin.strip()]
 else:
-    cors_origins = [origin.strip() for origin in str(settings.CORS_ORIGINS).split(",") if origin.strip()]
+    parsed_origins = [origin.strip().rstrip("/") for origin in str(settings.CORS_ORIGINS).split(",") if origin.strip()]
 
+# Credentials require specific origins: wildcard '*' is strictly forbidden
+cors_origins = [origin for origin in parsed_origins if origin and origin != "*"]
 if not cors_origins:
-    cors_origins = ["http://localhost:3000"]
+    cors_origins = ["http://localhost:3000", "http://localhost:3001", "https://hrhiringloop.vercel.app"]
 
 # Always allow credentials, all methods, and all headers (including custom header ngrok-skip-browser-warning)
 app.add_middleware(

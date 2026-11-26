@@ -131,14 +131,15 @@ def google_callback(
         # Redirect user to FRONTEND_URL/auth/callback (with token param for instant local storage sync)
         redirect_url = f"{frontend_url}/auth/callback?token={urllib.parse.quote(token)}&setup_completed={str(auth_res.setup_completed).lower()}"
         response = RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
+        is_https = frontend_url.startswith("https")
         response.set_cookie(
             key="auth_token",
             value=token,
             max_age=60 * 60 * 24 * 7,
             path="/",
             httponly=True,
-            samesite="lax",
-            secure=frontend_url.startswith("https"),
+            samesite="none" if is_https else "lax",
+            secure=is_https,
         )
         return response
 

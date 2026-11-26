@@ -93,10 +93,10 @@ class GoogleService:
         client_id = settings.GOOGLE_CLIENT_ID or "placeholder-google-client-id"
         target_redirect_uri = (
             redirect_uri
+            or os.getenv("GOOGLE_REDIRECT_URI")
+            or settings.google_redirect_uri
             or os.getenv("GOOGLE_WORKSPACE_REDIRECT_URI")
             or settings.GOOGLE_WORKSPACE_REDIRECT_URI
-            or os.getenv("GOOGLE_REDIRECT_URI")
-            or settings.GOOGLE_REDIRECT_URI
             or "http://localhost:8000/auth/google/callback"
         ).rstrip("/")
 
@@ -147,10 +147,10 @@ class GoogleService:
         client_secret = settings.GOOGLE_CLIENT_SECRET
         redirect_uri = (
             payload.get("redirect_uri")
+            or os.getenv("GOOGLE_REDIRECT_URI")
+            or settings.google_redirect_uri
             or os.getenv("GOOGLE_WORKSPACE_REDIRECT_URI")
             or settings.GOOGLE_WORKSPACE_REDIRECT_URI
-            or os.getenv("GOOGLE_REDIRECT_URI")
-            or settings.GOOGLE_REDIRECT_URI
             or "http://localhost:8000/auth/google/callback"
         ).rstrip("/")
 
