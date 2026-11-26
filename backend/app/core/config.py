@@ -142,9 +142,10 @@ class Settings(BaseSettings):
         return url.rstrip("/")
 
     # Supabase Storage Integration
+    STORAGE_BACKEND: Optional[str] = None
     SUPABASE_URL: Optional[str] = None
     SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
-    SUPABASE_STORAGE_BUCKET: str = "resumes"
+    SUPABASE_STORAGE_BUCKET: str = "cvs"
 
     # ── Redis L2 Cache (Optional) ────────────────────────────────────────────
     REDIS_URL: Optional[str] = None

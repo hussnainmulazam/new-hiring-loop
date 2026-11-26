@@ -77,10 +77,6 @@ GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
 GOOGLE_REVOKE_URL = "https://oauth2.googleapis.com/revoke"
 GMAIL_API_BASE = "https://gmail.googleapis.com/gmail/v1/users/me"
 
-BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
-LOCAL_UPLOAD_DIR = BACKEND_DIR / "uploads" / "cvs"
-LOCAL_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-
 
 class GoogleService:
     def __init__(self, session: Session):
@@ -548,19 +544,9 @@ class GoogleService:
         self, filename: str, file_bytes: bytes, mime_type: str = "application/pdf"
     ) -> str:
         """
-        Uploads file to Supabase Storage bucket using shared storage helper.
+        Uploads file to storage bucket using shared storage helper.
         """
-        try:
-            return save_candidate_cv_file(filename, file_bytes, mime_type)
-        except Exception as e:
-            logger.warning("save_candidate_cv_file failed in Gmail sync: %s", e)
-
-        # Fallback to local persistent filesystem
-        local_path = LOCAL_UPLOAD_DIR / f"{uuid.uuid4()}_{filename}"
-        with open(local_path, "wb") as f:
-            f.write(file_bytes)
-
-        return f"/uploads/cvs/{local_path.name}"
+        return save_candidate_cv_file(filename, file_bytes, mime_type)
 
     # ── 6. Gmail Sync Job with Rate-Limit & Backoff Handling ─────────────────
 
